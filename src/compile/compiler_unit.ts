@@ -1,6 +1,9 @@
 // Copyright (c) 2021 the Skulpt Project
 // SPDX-License-Identifier: MIT
 
+import { ASTVisitor } from "../ast/visitor.ts";
+import { SymbolTableScope } from "../symtable/SymbolTableScope.ts";
+
 /**
  * A BasicBlock is a unit of javascript code to be executed inside a switch case statement.
  * Basic blocks are an array of strings with a name and next property.
@@ -13,9 +16,9 @@ export interface BasicBlock extends Array<string> {
 }
 
 export interface CompilerUnit {
-    name: string;
+    readonly name: string;
     qualname: string /* dot-separated qualified name (lazy) */;
-    scopeType: number;
+    readonly scopeType: number;
     consts: { [constant: string]: string };
     names: { [constant: string]: string };
     varnames: unknown;
@@ -36,6 +39,20 @@ export interface CompilerUnit {
     colOffset: number;
 }
 
-export class CompilerUnit {
-    constructor() {}
+export class CompilerUnit extends ASTVisitor {
+    lineno = 0;
+    consts: { [constant: string]: string } = {};
+    names: { [constant: string]: string } = {};
+
+    constructor(
+        readonly space,
+        readonly name: string,
+        readonly firstLineNo: number,
+        scope: SymbolTableScope,
+        compilerInfo
+    ) {
+        super();
+        this.varnames = Object.fromEntries(scope.varnames.map((name, i) => [name, i]));
+        this.cellvars = Object.fromEntries(scope.varnames.map((name, i) => [name, i]));
+    }
 }
